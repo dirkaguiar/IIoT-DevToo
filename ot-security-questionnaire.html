@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OT Security Assessment – octoplant & OTbase</title>
+    <style>
+        :root {
+            --primary: #001f3f;
+            --primary-light: #0a2e5c;
+            --accent: #ffcc00;
+            --accent-dark: #e6b800;
+            --accent-text: #001f3f;
+            --success: #28a745;
+            --warning: #f0ad4e;
+            --danger: #dc3545;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #1a1a2e;
+            --text-light: #5a5a7a;
+            --border: #d0d4dc;
+            --octoplant: #004e66;
+            --otbase: #003366;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,204,0,0.12) 0%, transparent 70%);
+            animation: pulse 6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        header h1 {
+            font-size: 2rem;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header h1::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--accent);
+            margin: 0.5rem auto 0;
+            border-radius: 2px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .intro {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .intro h2 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .intro p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .progress-bar-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .progress-bar-container span {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+            border-radius: 5px;
+            transition: width 0.4s ease;
+            width: 0%;
+            box-shadow: 0 0 6px rgba(255, 204, 0, 0.4);
+        }
+
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .question-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px rgba(255,204,0,0.15);
+        }
+
+        .question-card.answered {
+            border-color: var(--success);
+        }
+
+        .question-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .question-number {
+            background: var(--primary);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .question-card.answered .question-number {
+            background: var(--success);
+        }
+
+        .question-text {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--primary);
+            padding-top: 5px;
+        }
+
+        .category-tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            margin-left: 52px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cat-inventory { background: #e3f2fd; color: #1565c0; }
+        .cat-access { background: #fce4ec; color: #c62828; }
+        .cat-network { background: #e8f5e9; color: #2e7d32; }
+        .cat-change { background: #fff3e0; color: #e65100; }
+        .cat-monitoring { background: #f3e5f5; color: #6a1b9a; }
+        .cat-backup { background: #e0f7fa; color: #00695c; }
+        .cat-risk { background: #fff9c4; color: #f57f17; }
+        .cat-compliance { background: #efebe9; color: #4e342e; }
+        .cat-patch { background: #e8eaf6; color: #283593; }
+        .cat-incident { background: #fbe9e7; color: #bf360c; }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-left: 52px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .option-label:hover {
+            border-color: var(--accent);
+            background: rgba(255, 204, 0, 0.06);
+        }
+
+        .option-label input[type="radio"] {
+            accent-color: var(--primary);
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .option-label.selected {
+            border-color: var(--accent);
+            background: rgba(255, 204, 0, 0.1);
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: var(--accent-text);
+            border: none;
+            padding: 0.9rem 2.5rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(255, 204, 0, 0.45);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        /* Results */
+        #results {
+            display: none;
+        }
+
+        .result-summary {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .result-summary h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .score-display {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            position: relative;
+        }
+
+        .score-circle span {
+            font-size: 0.8rem;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        .score-low { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .score-mid { background: linear-gradient(135deg, #f0ad4e, #ec971f); }
+        .score-high { background: linear-gradient(135deg, #28a745, #1e7e34); }
+
+        .maturity-level {
+            font-size: 1.1rem;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .level-critical { background: #f8d7da; color: #721c24; }
+        .level-basic { background: #fff3cd; color: #856404; }
+        .level-good { background: #d4edda; color: #155724; }
+
+        .result-detail {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid var(--accent);
+        }
+
+        .result-detail h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.05rem;
+        }
+
+        .result-detail .risk-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 12px;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .risk-high { background: #f8d7da; color: #721c24; }
+        .risk-medium { background: #fff3cd; color: #856404; }
+        .risk-low { background: #d4edda; color: #155724; }
+
+        .result-detail p {
+            font-size: 0.93rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .recommendation-section h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            text-align: center;
+        }
+
+        .product-rec {
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid;
+        }
+
+        .product-rec.octoplant {
+            border-color: var(--octoplant);
+            background: linear-gradient(135deg, rgba(0,151,167,0.05), rgba(0,151,167,0.02));
+        }
+
+        .product-rec.otbase {
+            border-color: var(--otbase);
+            background: linear-gradient(135deg, rgba(92,107,192,0.05), rgba(92,107,192,0.02));
+        }
+
+        .product-rec h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .product-rec.octoplant h3 { color: var(--octoplant); }
+        .product-rec.otbase h3 { color: var(--otbase); }
+
+        .product-rec .relevance-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 0.75rem 0;
+            overflow: hidden;
+        }
+
+        .product-rec.octoplant .relevance-fill { background: var(--octoplant); }
+        .product-rec.otbase .relevance-fill { background: var(--otbase); }
+
+        .relevance-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .product-rec .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .product-rec ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .product-rec ul li {
+            padding: 0.4rem 0;
+            font-size: 0.93rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .product-rec.octoplant ul li::before {
+            content: '✔';
+            position: absolute;
+            left: 0;
+            color: var(--octoplant);
+            font-weight: 700;
+        }
+
+        .product-rec.otbase ul li::before {
+            content: '✔';
+            position: absolute;
+            left: 0;
+            color: var(--otbase);
+            font-weight: 700;
+        }
+
+        .btn-restart {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-restart:hover {
+            background: var(--primary-light);
+        }
+
+        .combined-box {
+            background: linear-gradient(135deg, rgba(0,151,167,0.06), rgba(92,107,192,0.06));
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .combined-box h3 {
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .combined-box p {
+            font-size: 0.93rem;
+            color: var(--text);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.4rem; }
+            .container { padding: 1rem; }
+            .question-card { padding: 1.2rem; }
+            .options { margin-left: 0; }
+            .category-tag { margin-left: 0; }
+            .score-display { gap: 1.5rem; }
+            .score-circle { width: 120px; height: 120px; font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>OT Security Self-Assessment</h1>
+    <p>10 Fragen zur Bewertung Ihrer OT-Sicherheitslage – mit individueller Produktempfehlung</p>
+</header>
+
+<div class="container">
+
+    <div class="intro">
+        <h2>So funktioniert es</h2>
+        <p>Beantworten Sie die folgenden 10 Fragen zu Ihrer aktuellen OT-Security-Situation. Basierend auf Ihren Antworten erhalten Sie eine Risikoanalyse sowie maßgeschneiderte Empfehlungen für <strong>octoplant</strong> (Backup, Versionierung & Change Management für OT-Assets) und <strong>OTbase</strong> (OT-Asset-Inventar & Netzwerk-Management).</p>
+    </div>
+
+    <div class="progress-bar-container">
+        <span id="progressText">0 / 10</span>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+
+    <form id="quizForm">
+
+        <!-- Frage 1 -->
+        <div class="question-card" id="qcard-1">
+            <div class="question-header">
+                <div class="question-number">1</div>
+                <div class="question-text">Haben Sie ein vollständiges Inventar aller OT-Assets (SPS, HMI, SCADA, Netzwerkgeräte) in Ihrer Produktionsumgebung?</div>
+            </div>
+            <div class="category-tag cat-inventory">Asset-Inventar</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q1" value="0" onchange="updateProgress()"> Nein, wir haben keinen Überblick über unsere OT-Assets.</label>
+                <label class="option-label"><input type="radio" name="q1" value="1" onchange="updateProgress()"> Teilweise – es gibt Excel-Listen, die aber veraltet sind.</label>
+                <label class="option-label"><input type="radio" name="q1" value="2" onchange="updateProgress()"> Ja, wir pflegen ein digitales Inventar, aber nicht automatisiert.</label>
+                <label class="option-label"><input type="radio" name="q1" value="3" onchange="updateProgress()"> Ja, wir nutzen ein automatisiertes Asset-Management-System mit Live-Daten.</label>
+            </div>
+        </div>
+
+        <!-- Frage 2 -->
+        <div class="question-card" id="qcard-2">
+            <div class="question-header">
+                <div class="question-number">2</div>
+                <div class="question-text">Werden Änderungen an SPS-Programmen, HMI-Projekten und anderen OT-Konfigurationen systematisch versioniert und dokumentiert?</div>
+            </div>
+            <div class="category-tag cat-change">Change Management</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q2" value="0" onchange="updateProgress()"> Nein, Änderungen werden nicht nachverfolgt.</label>
+                <label class="option-label"><input type="radio" name="q2" value="1" onchange="updateProgress()"> Nur manuell – Änderungen werden gelegentlich per Dateiname oder Ordnerstruktur gespeichert.</label>
+                <label class="option-label"><input type="radio" name="q2" value="2" onchange="updateProgress()"> Wir haben ein Versionierungssystem, aber es wird nicht konsequent genutzt.</label>
+                <label class="option-label"><input type="radio" name="q2" value="3" onchange="updateProgress()"> Ja, jede Änderung wird automatisch erkannt, versioniert und mit Kontext dokumentiert.</label>
+            </div>
+        </div>
+
+        <!-- Frage 3 -->
+        <div class="question-card" id="qcard-3">
+            <div class="question-header">
+                <div class="question-number">3</div>
+                <div class="question-text">Wie ist Ihr OT-Netzwerk gegenüber dem IT-Netzwerk und dem Internet segmentiert?</div>
+            </div>
+            <div class="category-tag cat-network">Netzwerksegmentierung</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q3" value="0" onchange="updateProgress()"> Es gibt keine Trennung – OT und IT befinden sich im selben Netzwerk.</label>
+                <label class="option-label"><input type="radio" name="q3" value="1" onchange="updateProgress()"> Es gibt eine einfache Firewall, aber keine echte Segmentierung.</label>
+                <label class="option-label"><input type="radio" name="q3" value="2" onchange="updateProgress()"> OT und IT sind über DMZ/Firewall getrennt, aber die Konfiguration ist unklar.</label>
+                <label class="option-label"><input type="radio" name="q3" value="3" onchange="updateProgress()"> Wir haben ein dokumentiertes Segmentierungskonzept nach IEC 62443 mit Zonen und Conduits.</label>
+            </div>
+        </div>
+
+        <!-- Frage 4 -->
+        <div class="question-card" id="qcard-4">
+            <div class="question-header">
+                <div class="question-number">4</div>
+                <div class="question-text">Gibt es regelmäßige Backups Ihrer SPS-Programme, HMI-Konfigurationen und SCADA-Projekte?</div>
+            </div>
+            <div class="category-tag cat-backup">Backup & Recovery</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q4" value="0" onchange="updateProgress()"> Nein, wir haben keine Backups unserer OT-Konfigurationen.</label>
+                <label class="option-label"><input type="radio" name="q4" value="1" onchange="updateProgress()"> Nur sporadisch – einzelne Mitarbeiter sichern Dateien manuell.</label>
+                <label class="option-label"><input type="radio" name="q4" value="2" onchange="updateProgress()"> Wir machen regelmäßige Backups, aber kein automatisierter Prozess.</label>
+                <label class="option-label"><input type="radio" name="q4" value="3" onchange="updateProgress()"> Ja, automatisierte Backups mit Vergleichs- und Wiederherstellungsfunktion.</label>
+            </div>
+        </div>
+
+        <!-- Frage 5 -->
+        <div class="question-card" id="qcard-5">
+            <div class="question-header">
+                <div class="question-number">5</div>
+                <div class="question-text">Wie verwalten Sie Zugriffsrechte und Benutzerkonten für OT-Systeme (z. B. Engineering-Workstations, SPS-Zugriff)?</div>
+            </div>
+            <div class="category-tag cat-access">Zugriffssteuerung</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q5" value="0" onchange="updateProgress()"> Es gibt keine Zugriffsbeschränkungen – jeder hat Vollzugriff.</label>
+                <label class="option-label"><input type="radio" name="q5" value="1" onchange="updateProgress()"> Es gibt gemeinsame Passwörter, die selten geändert werden.</label>
+                <label class="option-label"><input type="radio" name="q5" value="2" onchange="updateProgress()"> Individuelle Konten existieren, aber Rollen und Rechte sind unklar definiert.</label>
+                <label class="option-label"><input type="radio" name="q5" value="3" onchange="updateProgress()"> Rollenbasiertes Zugriffskonzept mit individuellen Konten und Audit-Trail.</label>
+            </div>
+        </div>
+
+        <!-- Frage 6 -->
+        <div class="question-card" id="qcard-6">
+            <div class="question-header">
+                <div class="question-number">6</div>
+                <div class="question-text">Kennen Sie die Firmware-Versionen und bekannten Schwachstellen (CVEs) Ihrer OT-Geräte?</div>
+            </div>
+            <div class="category-tag cat-patch">Schwachstellen- & Patch-Management</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q6" value="0" onchange="updateProgress()"> Nein, wir haben keinen Überblick über Firmware-Stände oder Schwachstellen.</label>
+                <label class="option-label"><input type="radio" name="q6" value="1" onchange="updateProgress()"> Wir kennen einige Firmware-Versionen, prüfen aber nicht aktiv auf CVEs.</label>
+                <label class="option-label"><input type="radio" name="q6" value="2" onchange="updateProgress()"> Wir verfolgen Schwachstellenmeldungen, aber die Zuordnung zu unseren Assets ist manuell.</label>
+                <label class="option-label"><input type="radio" name="q6" value="3" onchange="updateProgress()"> Automatische Zuordnung von CVEs zu unseren Assets mit Risikobewertung.</label>
+            </div>
+        </div>
+
+        <!-- Frage 7 -->
+        <div class="question-card" id="qcard-7">
+            <div class="question-header">
+                <div class="question-number">7</div>
+                <div class="question-text">Können Sie unautorisierte Änderungen an Ihren OT-Systemen erkennen und nachvollziehen?</div>
+            </div>
+            <div class="category-tag cat-monitoring">Monitoring & Erkennung</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q7" value="0" onchange="updateProgress()"> Nein, unautorisierte Änderungen würden uns nicht auffallen.</label>
+                <label class="option-label"><input type="radio" name="q7" value="1" onchange="updateProgress()"> Nur bei offensichtlichen Störungen – es gibt kein proaktives Monitoring.</label>
+                <label class="option-label"><input type="radio" name="q7" value="2" onchange="updateProgress()"> Wir prüfen stichprobenartig, aber nicht systematisch.</label>
+                <label class="option-label"><input type="radio" name="q7" value="3" onchange="updateProgress()"> Automatische Change Detection mit Alarmierung bei unautorisierten Änderungen.</label>
+            </div>
+        </div>
+
+        <!-- Frage 8 -->
+        <div class="question-card" id="qcard-8">
+            <div class="question-header">
+                <div class="question-number">8</div>
+                <div class="question-text">Haben Sie einen dokumentierten Incident-Response-Plan speziell für OT-Sicherheitsvorfälle?</div>
+            </div>
+            <div class="category-tag cat-incident">Incident Response</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q8" value="0" onchange="updateProgress()"> Nein, es gibt keinen Plan für OT-Sicherheitsvorfälle.</label>
+                <label class="option-label"><input type="radio" name="q8" value="1" onchange="updateProgress()"> Es gibt einen allgemeinen IT-Notfallplan, der OT nicht abdeckt.</label>
+                <label class="option-label"><input type="radio" name="q8" value="2" onchange="updateProgress()"> Ein OT-spezifischer Plan existiert, wurde aber noch nie getestet.</label>
+                <label class="option-label"><input type="radio" name="q8" value="3" onchange="updateProgress()"> Dokumentierter, regelmäßig getesteter OT-Incident-Response-Plan mit klaren Rollen.</label>
+            </div>
+        </div>
+
+        <!-- Frage 9 -->
+        <div class="question-card" id="qcard-9">
+            <div class="question-header">
+                <div class="question-number">9</div>
+                <div class="question-text">Unterliegen Sie regulatorischen Anforderungen (z. B. NIS2, KRITIS, IEC 62443) und können Sie Compliance nachweisen?</div>
+            </div>
+            <div class="category-tag cat-compliance">Compliance & Regulierung</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q9" value="0" onchange="updateProgress()"> Wir kennen die Anforderungen nicht oder ignorieren sie.</label>
+                <label class="option-label"><input type="radio" name="q9" value="1" onchange="updateProgress()"> Wir wissen, dass Anforderungen bestehen, haben aber keine Maßnahmen ergriffen.</label>
+                <label class="option-label"><input type="radio" name="q9" value="2" onchange="updateProgress()"> Wir arbeiten an der Umsetzung, können Compliance aber noch nicht nachweisen.</label>
+                <label class="option-label"><input type="radio" name="q9" value="3" onchange="updateProgress()"> Compliance ist dokumentiert, auditierbar und wird regelmäßig überprüft.</label>
+            </div>
+        </div>
+
+        <!-- Frage 10 -->
+        <div class="question-card" id="qcard-10">
+            <div class="question-header">
+                <div class="question-number">10</div>
+                <div class="question-text">Haben Sie eine klare Übersicht über die Kommunikationsbeziehungen und Datenflüsse in Ihrem OT-Netzwerk?</div>
+            </div>
+            <div class="category-tag cat-network">Netzwerktransparenz</div>
+            <div class="options">
+                <label class="option-label"><input type="radio" name="q10" value="0" onchange="updateProgress()"> Nein, wir wissen nicht, welche Geräte miteinander kommunizieren.</label>
+                <label class="option-label"><input type="radio" name="q10" value="1" onchange="updateProgress()"> Wir haben eine grobe Vorstellung, aber keine Dokumentation.</label>
+                <label class="option-label"><input type="radio" name="q10" value="2" onchange="updateProgress()"> Es gibt Netzwerkdiagramme, die aber nicht aktuell gehalten werden.</label>
+                <label class="option-label"><input type="radio" name="q10" value="3" onchange="updateProgress()"> Automatisch erstellte, aktuelle Netzwerktopologie mit Kommunikationsbeziehungen.</label>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button type="button" class="btn-primary" id="submitBtn" onclick="showResults()" disabled>
+                Auswertung anzeigen &#10132;
+            </button>
+        </div>
+
+    </form>
+
+    <!-- Results Section -->
+    <div id="results">
+
+        <div class="result-summary">
+            <h2>Ihre OT-Security-Auswertung</h2>
+            <div class="score-display">
+                <div class="score-circle" id="scoreCircle">
+                    <div id="scoreValue">0</div>
+                    <span>von 30</span>
+                </div>
+            </div>
+            <div id="maturityLabel" class="maturity-level"></div>
+            <p id="maturityDescription" style="margin-top:0.75rem; color: var(--text-light);"></p>
+        </div>
+
+        <div id="detailResults"></div>
+
+        <div class="recommendation-section">
+            <h2>Ihre individuelle Produktempfehlung</h2>
+
+            <div class="product-rec octoplant" id="recOctoplant">
+                <h3>&#9881; octoplant</h3>
+                <p class="subtitle">Backup, Versionierung & Change Management für industrielle Automatisierung</p>
+                <div class="relevance-bar"><div class="relevance-fill" id="octoplantBar" style="width:0%"></div></div>
+                <p id="octoplantRelevance" style="font-size:0.85rem; font-weight:600; margin-bottom:0.75rem;"></p>
+                <ul id="octoplantItems"></ul>
+            </div>
+
+            <div class="product-rec otbase" id="recOTbase">
+                <h3>&#128225; OTbase</h3>
+                <p class="subtitle">OT-Asset-Inventar, Netzwerk-Management & Schwachstellenanalyse</p>
+                <div class="relevance-bar"><div class="relevance-fill" id="otbaseBar" style="width:0%"></div></div>
+                <p id="otbaseRelevance" style="font-size:0.85rem; font-weight:600; margin-bottom:0.75rem;"></p>
+                <ul id="otbaseItems"></ul>
+            </div>
+
+            <div class="combined-box" id="comboBox" style="display:none;">
+                <h3>&#128279; Maximale Wirkung: octoplant + OTbase im Zusammenspiel</h3>
+                <p id="comboText"></p>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn-restart" onclick="restartQuiz()">Erneut starten &#8634;</button>
+        </div>
+
+    </div>
+
+</div>
+
+<footer>
+    &copy; 2026 OT Security Self-Assessment – Empfehlungen f&uuml;r octoplant &amp; OTbase
+</footer>
+
+<script>
+    // Question metadata for analysis
+    const questionMeta = [
+        { id: 1, category: 'Asset-Inventar', octoplantWeight: 0.3, otbaseWeight: 1.0,
+          analysis: [
+            'Kein Asset-Inventar: Sie fliegen blind. Ohne Überblick über Ihre OT-Assets können Sie weder Schwachstellen managen noch Compliance nachweisen.',
+            'Veraltete Listen bergen das Risiko, dass kritische Assets übersehen und nicht geschützt werden.',
+            'Manuelles Inventar ist ein guter Anfang, aber fehleranfällig und schwer aktuell zu halten.',
+            'Hervorragend – Ihr automatisiertes Inventar bildet eine solide Grundlage für OT-Security.'
+          ]},
+        { id: 2, category: 'Change Management', octoplantWeight: 1.0, otbaseWeight: 0.2,
+          analysis: [
+            'Ohne Änderungsverfolgung können Sabotage, Fehlkonfigurationen oder versehentliche Änderungen unbemerkt bleiben – ein kritisches Risiko.',
+            'Manuelle Versionierung ist besser als nichts, aber fehleranfällig und nicht lückenlos nachvollziehbar.',
+            'Ein vorhandenes, aber inkonsistent genutztes System bietet nur eingeschränkten Schutz.',
+            'Exzellent – automatische Change Detection schützt vor unautorisierten Änderungen und vereinfacht Audits.'
+          ]},
+        { id: 3, category: 'Netzwerksegmentierung', octoplantWeight: 0.2, otbaseWeight: 0.8,
+          analysis: [
+            'Ohne Segmentierung kann sich Schadsoftware ungehindert zwischen IT und OT ausbreiten – maximales Risiko!',
+            'Eine einfache Firewall bietet minimalen Schutz, aber keine echte Trennung der Netzwerkzonen.',
+            'Die Segmentierung ist vorhanden, aber ohne klare Dokumentation schwer zu überprüfen und zu pflegen.',
+            'Sehr gut – eine IEC 62443-konforme Segmentierung ist der Gold-Standard für OT-Netzwerke.'
+          ]},
+        { id: 4, category: 'Backup & Recovery', octoplantWeight: 1.0, otbaseWeight: 0.1,
+          analysis: [
+            'Ohne Backups können Ransomware-Angriffe oder Hardware-Ausfälle zum totalen Produktionsstillstand führen.',
+            'Sporadische Backups sind hochriskant – im Ernstfall fehlen aktuelle oder vollständige Sicherungen.',
+            'Regelmäßige manuelle Backups sind gut, aber anfällig für menschliche Fehler und Lücken.',
+            'Optimal – automatische Backups mit Vergleichsfunktion ermöglichen schnelle Wiederherstellung.'
+          ]},
+        { id: 5, category: 'Zugriffssteuerung', octoplantWeight: 0.5, otbaseWeight: 0.6,
+          analysis: [
+            'Uneingeschränkter Zugriff bedeutet: jeder kann alles ändern. Ein Insider-Threat oder kompromittiertes Konto kann maximalen Schaden anrichten.',
+            'Gemeinsam genutzte Passwörter machen es unmöglich, Aktionen bestimmten Personen zuzuordnen.',
+            'Individuelle Konten sind vorhanden, aber unklare Rollen erschweren die Nachvollziehbarkeit.',
+            'Vorbildlich – rollenbasierte Zugangskontrolle mit Audit-Trail erfüllt regulatorische Anforderungen.'
+          ]},
+        { id: 6, category: 'Schwachstellen-Management', octoplantWeight: 0.3, otbaseWeight: 1.0,
+          analysis: [
+            'Ohne Kenntnis Ihrer Firmware-Stände sind Sie blind gegenüber bekannten Schwachstellen – ein Einfallstor für Angreifer.',
+            'Teilkenntnis ohne CVE-Prüfung lässt kritische Sicherheitslücken offen.',
+            'Manuelles CVE-Tracking ist zeitaufwändig und fehleranfällig bei großen OT-Umgebungen.',
+            'Erstklassig – automatische CVE-Zuordnung ermöglicht risikobasiertes Patch-Management.'
+          ]},
+        { id: 7, category: 'Change Detection', octoplantWeight: 1.0, otbaseWeight: 0.4,
+          analysis: [
+            'Ohne Erkennung unerlaubter Änderungen können Angriffe und Fehlkonfigurationen wochenlang unentdeckt bleiben.',
+            'Reaktive Erkennung bei Störungen kommt zu spät – der Schaden ist dann bereits eingetreten.',
+            'Stichproben bieten keine ausreichende Abdeckung in einer dynamischen OT-Umgebung.',
+            'Sehr gut – proaktive Change Detection mit Alarmierung ist ein Kernbaustein der OT-Sicherheit.'
+          ]},
+        { id: 8, category: 'Incident Response', octoplantWeight: 0.6, otbaseWeight: 0.5,
+          analysis: [
+            'Ohne Incident-Response-Plan reagieren Sie im Ernstfall chaotisch – das vervielfacht den Schaden.',
+            'Ein reiner IT-Plan ignoriert OT-spezifische Anforderungen wie Safety und Produktionskontinuität.',
+            'Ein ungetesteter Plan gibt falsche Sicherheit – im Ernstfall funktioniert er möglicherweise nicht.',
+            'Ausgezeichnet – ein erprobter OT-Incident-Response-Plan verkürzt die Reaktionszeit erheblich.'
+          ]},
+        { id: 9, category: 'Compliance', octoplantWeight: 0.5, otbaseWeight: 0.7,
+          analysis: [
+            'Ignorierte Compliance-Anforderungen führen zu rechtlichen Risiken und potenziellen Bußgeldern (z. B. NIS2).',
+            'Bewusstsein ohne Maßnahmen schützt nicht vor Sanktionen – handeln Sie jetzt.',
+            'Sie sind auf dem richtigen Weg, aber ohne Nachweise fehlt die Auditfähigkeit.',
+            'Vorbildlich – dokumentierte und auditierbare Compliance schützt Sie rechtlich und operativ.'
+          ]},
+        { id: 10, category: 'Netzwerktransparenz', octoplantWeight: 0.2, otbaseWeight: 1.0,
+          analysis: [
+            'Ohne Netzwerktransparenz können Sie weder Anomalien erkennen noch Ihr Netzwerk effektiv absichern.',
+            'Eine grobe Vorstellung reicht nicht – blinde Flecken im Netzwerk sind Einfallstore für Angreifer.',
+            'Veraltete Diagramme spiegeln nicht die aktuelle Realität wider und sind im Ernstfall unzuverlässig.',
+            'Excellent – automatische Netzwerktopologie bietet vollständige Transparenz und Kontrolle.'
+          ]}
+    ];
+
+    function updateProgress() {
+        let answered = 0;
+        for (let i = 1; i <= 10; i++) {
+            const val = document.querySelector(`input[name="q${i}"]:checked`);
+            if (val) {
+                answered++;
+                document.getElementById(`qcard-${i}`).classList.add('answered');
+            } else {
+                document.getElementById(`qcard-${i}`).classList.remove('answered');
+            }
+        }
+        document.getElementById('progressText').textContent = `${answered} / 10`;
+        document.getElementById('progressFill').style.width = `${answered * 10}%`;
+        document.getElementById('submitBtn').disabled = (answered < 10);
+
+        // Highlight selected options
+        document.querySelectorAll('.option-label').forEach(label => {
+            const radio = label.querySelector('input[type="radio"]');
+            label.classList.toggle('selected', radio.checked);
+        });
+    }
+
+    function showResults() {
+        let totalScore = 0;
+        let scores = [];
+        let octoplantScore = 0;
+        let otbaseScore = 0;
+        let octoplantMax = 0;
+        let otbaseMax = 0;
+
+        for (let i = 0; i < 10; i++) {
+            const val = parseInt(document.querySelector(`input[name="q${i + 1}"]:checked`).value);
+            scores.push(val);
+            totalScore += val;
+            octoplantScore += (3 - val) * questionMeta[i].octoplantWeight;
+            otbaseScore += (3 - val) * questionMeta[i].otbaseWeight;
+            octoplantMax += 3 * questionMeta[i].octoplantWeight;
+            otbaseMax += 3 * questionMeta[i].otbaseWeight;
+        }
+
+        const octoplantPct = Math.round((octoplantScore / octoplantMax) * 100);
+        const otbasePct = Math.round((otbaseScore / otbaseMax) * 100);
+
+        // Hide form, show results
+        document.getElementById('quizForm').style.display = 'none';
+        document.querySelector('.progress-bar-container').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+
+        // Score circle
+        const circle = document.getElementById('scoreCircle');
+        document.getElementById('scoreValue').textContent = totalScore;
+        if (totalScore <= 10) {
+            circle.className = 'score-circle score-low';
+        } else if (totalScore <= 20) {
+            circle.className = 'score-circle score-mid';
+        } else {
+            circle.className = 'score-circle score-high';
+        }
+
+        // Maturity level
+        const mLabel = document.getElementById('maturityLabel');
+        const mDesc = document.getElementById('maturityDescription');
+        if (totalScore <= 10) {
+            mLabel.textContent = 'Reifegrad: Kritisch';
+            mLabel.className = 'maturity-level level-critical';
+            mDesc.textContent = 'Ihre OT-Sicherheit weist erhebliche Lücken auf. Dringender Handlungsbedarf in mehreren Bereichen. Ein strukturiertes Vorgehen mit den richtigen Werkzeugen ist essenziell.';
+        } else if (totalScore <= 20) {
+            mLabel.textContent = 'Reifegrad: Grundlegend';
+            mLabel.className = 'maturity-level level-basic';
+            mDesc.textContent = 'Sie haben erste Maßnahmen umgesetzt, aber es bestehen noch relevante Lücken. Gezielte Verbesserungen können Ihr Sicherheitsniveau deutlich anheben.';
+        } else {
+            mLabel.textContent = 'Reifegrad: Fortgeschritten';
+            mLabel.className = 'maturity-level level-good';
+            mDesc.textContent = 'Ihre OT-Security ist gut aufgestellt. Fokussieren Sie sich auf Automatisierung und Optimierung, um den erreichten Standard zu halten und auszubauen.';
+        }
+
+        // Detailed analysis per question
+        const detailDiv = document.getElementById('detailResults');
+        detailDiv.innerHTML = '<h2 style="color:var(--primary); margin-bottom:1rem; font-size:1.3rem;">Detailanalyse pro Bereich</h2>';
+        for (let i = 0; i < 10; i++) {
+            const val = scores[i];
+            let riskClass, riskText;
+            if (val <= 1) { riskClass = 'risk-high'; riskText = 'Hohes Risiko'; }
+            else if (val === 2) { riskClass = 'risk-medium'; riskText = 'Mittleres Risiko'; }
+            else { riskClass = 'risk-low'; riskText = 'Geringes Risiko'; }
+
+            detailDiv.innerHTML += `
+                <div class="result-detail">
+                    <h3>Frage ${i + 1}: ${questionMeta[i].category}</h3>
+                    <div class="risk-badge ${riskClass}">${riskText}</div>
+                    <p>${questionMeta[i].analysis[val]}</p>
+                </div>
+            `;
+        }
+
+        // octoplant recommendations
+        const octoplantItems = document.getElementById('octoplantItems');
+        const octoplantRelevance = document.getElementById('octoplantRelevance');
+        document.getElementById('octoplantBar').style.width = `${octoplantPct}%`;
+        octoplantRelevance.textContent = `Relevanz für Ihre Situation: ${octoplantPct}%`;
+        octoplantItems.innerHTML = '';
+
+        const octoplantRecs = [];
+        if (scores[1] <= 1) octoplantRecs.push('Automatische Versionierung aller SPS-, HMI- und SCADA-Programme – keine Änderung geht mehr verloren.');
+        if (scores[3] <= 1) octoplantRecs.push('Automatisierte Backups Ihrer gesamten OT-Konfigurationen mit sofortiger Wiederherstellungsmöglichkeit.');
+        if (scores[6] <= 1) octoplantRecs.push('Change Detection: Erkennung und Alarmierung bei unautorisierten Änderungen an Ihren Automatisierungssystemen.');
+        if (scores[4] <= 1) octoplantRecs.push('Zugriffsprotokollierung: Nachvollziehbar dokumentiert, wer wann welche Änderungen vorgenommen hat.');
+        if (scores[7] <= 2) octoplantRecs.push('Schnelle Wiederherstellung im Incident-Fall: Rollback auf bekannten guten Zustand in Minuten statt Stunden.');
+        if (scores[8] <= 2) octoplantRecs.push('Compliance-Nachweis: Lückenlose Änderungshistorie für NIS2-, KRITIS- und IEC 62443-Audits.');
+        if (scores[1] <= 2 && scores[3] <= 2) octoplantRecs.push('Vergleichsfunktion: Sofort erkennen, was sich zwischen zwei Versionen geändert hat – auch im Code-Detail.');
+
+        if (octoplantRecs.length === 0) {
+            octoplantRecs.push('Ihr Change Management und Backup-Niveau ist bereits hoch. octoplant kann als zentrales System dienen, um diesen Standard zu automatisieren und abzusichern.');
+        }
+        octoplantRecs.forEach(r => { octoplantItems.innerHTML += `<li>${r}</li>`; });
+
+        // OTbase recommendations
+        const otbaseItems = document.getElementById('otbaseItems');
+        const otbaseRelevance = document.getElementById('otbaseRelevance');
+        document.getElementById('otbaseBar').style.width = `${otbasePct}%`;
+        otbaseRelevance.textContent = `Relevanz für Ihre Situation: ${otbasePct}%`;
+        otbaseItems.innerHTML = '';
+
+        const otbaseRecs = [];
+        if (scores[0] <= 1) otbaseRecs.push('Automatisierte Asset-Discovery: Vollständiges Inventar aller OT-Geräte – Hersteller, Modell, Firmware, Standort.');
+        if (scores[2] <= 1) otbaseRecs.push('Netzwerksegmentierungs-Analyse: Visualisierung von Zonen und Kommunikationsbeziehungen nach IEC 62443.');
+        if (scores[5] <= 1) otbaseRecs.push('CVE-Matching: Automatische Zuordnung bekannter Schwachstellen zu Ihren Assets mit Risikopriorisierung.');
+        if (scores[9] <= 1) otbaseRecs.push('Netzwerktopologie: Automatisch generierte, aktuelle Übersicht aller Kommunikationsbeziehungen.');
+        if (scores[4] <= 2) otbaseRecs.push('Zentrale Verwaltung von Asset-Informationen als Grundlage für rollenbasierte Zugriffskonzepte.');
+        if (scores[8] <= 2) otbaseRecs.push('Compliance-Dashboard: Übersichtliche Darstellung des Sicherheitsstatus für NIS2- und IEC 62443-Audits.');
+        if (scores[0] <= 2 && scores[5] <= 2) otbaseRecs.push('Risikobewertung pro Asset: Kombination aus Asset-Kritikalität und Schwachstellenlage für priorisiertes Handeln.');
+
+        if (otbaseRecs.length === 0) {
+            otbaseRecs.push('Ihre Asset-Transparenz und Netzwerksicherheit sind bereits auf hohem Niveau. OTbase unterstützt Sie dabei, diesen Zustand dauerhaft zu überwachen und zu dokumentieren.');
+        }
+        otbaseRecs.forEach(r => { otbaseItems.innerHTML += `<li>${r}</li>`; });
+
+        // Combined recommendation
+        const comboBox = document.getElementById('comboBox');
+        const comboText = document.getElementById('comboText');
+        if (octoplantPct >= 30 && otbasePct >= 30) {
+            comboBox.style.display = 'block';
+            if (totalScore <= 10) {
+                comboText.textContent = 'Ihre Ergebnisse zeigen kritische Lücken sowohl bei der Asset-Transparenz als auch beim Change Management. Die Kombination von octoplant und OTbase bietet Ihnen ein ganzheitliches Sicherheitskonzept: OTbase liefert die vollständige Sicht auf Ihre OT-Landschaft und Schwachstellen, während octoplant alle Konfigurationen absichert und Änderungen lückenlos dokumentiert. Zusammen bilden sie die Grundlage für NIS2- und IEC 62443-Compliance.';
+            } else if (totalScore <= 20) {
+                comboText.textContent = 'Sie haben bereits Grundlagen geschaffen, aber es bestehen noch Lücken. Die Integration von octoplant und OTbase schließt diese effizient: OTbase identifiziert Ihre Assets und Schwachstellen, octoplant sichert Konfigurationen und erkennt Änderungen. Die Kombination schafft durchgängige Transparenz von der Asset-Ebene bis zur Code-Version.';
+            } else {
+                comboText.textContent = 'Ihr OT-Security-Niveau ist fortgeschritten. Die Synergie von octoplant und OTbase hilft Ihnen, dieses Niveau effizient aufrechtzuerhalten: Automatisierte Asset-Pflege, kontinuierliche Schwachstellenüberwachung und lückenlose Versionierung sorgen dafür, dass Sie jederzeit auditbereit sind.';
+            }
+        }
+
+        // Scroll to results
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function restartQuiz() {
+        document.getElementById('quizForm').style.display = 'block';
+        document.querySelector('.progress-bar-container').style.display = 'flex';
+        document.getElementById('results').style.display = 'none';
+
+        // Reset all radio buttons
+        document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+        document.querySelectorAll('.question-card').forEach(c => c.classList.remove('answered'));
+        document.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+
+        updateProgress();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
